@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Classifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            text-align: center;
+            margin-bottom: 30px;
+            border: 2px dashed #ccc;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .result-box {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .result-box h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Classification</h1>
+
+        <div class="upload-section">
+            <input type="file" id="imageUpload" accept="image/*">
+            <button onclick="uploadImage()">Predict</button>
+        </div>
+
+        <div id="loading" class="loading" style="display:none;">
+            Processing image...
+        </div>
+
+        <div id="error" class="error" style="display:none;"></div>
+
+        <div id="results" class="results-section" style="display:none;">
+            <h2>Prediction Results:</h2>
+            <div id="efficientnetResult" class="result-box"></div>
+            <div id="mobilenetResult" class="result-box"></div>
+        </div>
+    </div>
+
+    <script>
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageUpload');
+            const file = fileInput.files[0];
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const resultsDiv = document.getElementById('results');
+
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+
+            if (!file) {
+                errorDiv.textContent = 'Please select an image file.';
+                errorDiv.style.display = 'block';
+                loadingDiv.style.display = 'none';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                loadingDiv.style.display = 'none';
+                resultsDiv.style.display = 'block';
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    errorDiv.textContent = data.error || 'An error occurred during prediction.';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = 'Network error or server not reachable.';
+                errorDiv.style.display = 'block';
+                console.error('Error:', error);
+            }
+        }
+
+        function displayResults(data) {
+            const efficientnetResultDiv = document.getElementById('efficientnetResult');
+            const mobilenetResultDiv = document.getElementById('mobilenetResult');
+
+            efficientnetResultDiv.innerHTML = '';
+            mobilenetResultDiv.innerHTML = '';
+
+            if (data.efficientnet) {
+                if (data.efficientnet.error) {
+                    efficientnetResultDiv.innerHTML = `<h3>EfficientNet Result:</h3><p>Error: ${data.efficientnet.error}</p>`;
+                } else {
+                    efficientnetResultDiv.innerHTML = `
+                        <h3>EfficientNet Result:</h3>
+                        <p>Predicted Class: <strong>${data.efficientnet.class}</strong></p>
+                        <p>Confidence: <strong>${(data.efficientnet.confidence * 100).toFixed(2)}%</strong></p>
+                    `;
+                }
+            }
+
+            if (data.mobilenet) {
+                if (data.mobilenet.error) {
+                    mobilenetResultDiv.innerHTML = `<h3>MobileNetV2 Result:</h3><p>Error: ${data.mobilenet.error}</p>`;
+                } else {
+                    mobilenetResultDiv.innerHTML = `
+                        <h3>MobileNetV2 Result:</h3>
+                        <p>Predicted Class: <strong>${data.mobilenet.class}</strong></p>
+                        <p>Confidence: <strong>${(data.mobilenet.confidence * 100).toFixed(2)}%</strong></p>
+                    `;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
