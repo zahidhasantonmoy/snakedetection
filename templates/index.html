@@ -3,120 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Classifier</title>
+    <title>Snake Identifier</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
             color: #333;
         }
         .container {
             max-width: 800px;
-            margin: auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: #0056b3;
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 2rem;
             text-align: center;
-            margin-bottom: 30px;
+            border-radius: 0 0 1rem 1rem;
+        }
+        .main-content {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: -2rem;
         }
         .upload-section {
             text-align: center;
-            margin-bottom: 30px;
-            border: 2px dashed #ccc;
-            padding: 20px;
-            border-radius: 5px;
+            padding: 2rem;
+            border: 2px dashed #007bff;
+            border-radius: 1rem;
+            background-color: #e9f5ff;
+            margin-bottom: 2rem;
         }
-        input[type="file"] {
-            margin-bottom: 15px;
-        }
-        button {
+        .upload-section label {
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
             background-color: #007bff;
             color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease;
         }
-        button:hover {
+        .upload-section label:hover {
             background-color: #0056b3;
         }
+        input[type="file"] {
+            display: none;
+        }
+        .image-preview {
+            margin-top: 1.5rem;
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: none; /* Hidden by default */
+        }
+        .btn-predict {
+            background-color: #28a745;
+            border-color: #28a745;
+            font-size: 1.2rem;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+        .btn-predict:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
         .results-section {
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
+            margin-top: 2rem;
         }
-        .result-box {
-            background-color: #e9ecef;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
+        .result-card {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid #e0e0e0;
         }
-        .result-box h3 {
-            margin-top: 0;
+        .result-card h3 {
             color: #007bff;
+            margin-bottom: 1rem;
         }
-        .error {
-            color: red;
-            text-align: center;
-            margin-top: 20px;
+        .result-card p {
+            margin-bottom: 0.5rem;
         }
-        .loading {
+        .risk-high {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .risk-medium {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .risk-low {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .risk-none {
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .action-buttons {
+            margin-top: 1.5rem;
             text-align: center;
-            margin-top: 20px;
-            font-style: italic;
-            color: #555;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Image Classification</h1>
-
-        <div class="upload-section">
-            <input type="file" id="imageUpload" accept="image/*">
-            <button onclick="uploadImage()">Predict</button>
+    <div class="container my-5">
+        <div class="header">
+            <h1>Snake Identifier</h1>
+            <p class="lead">Upload an image to identify a snake</p>
         </div>
+        <div class="main-content">
+            <div class="upload-section">
+                <label for="imageUpload">Choose Image</label>
+                <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)">
+                <img id="imagePreview" class="image-preview" src="#" alt="Image Preview">
+            </div>
 
-        <div id="loading" class="loading" style="display:none;">
-            Processing image...
-        </div>
+            <div class="model-selection text-center mb-3">
+                <label for="modelSelect" class="form-label">Select Model:</label>
+                <select class="form-select w-50 mx-auto" id="modelSelect">
+                    <option value="efficientnet">EfficientNet</option>
+                    <option value="mobilenet">MobileNetV2</option>
+                </select>
+            </div>
 
-        <div id="error" class="error" style="display:none;"></div>
+            <div class="text-center">
+                <button class="btn btn-predict" onclick="uploadImage()">Predict</button>
+            </div>
 
-        <div id="results" class="results-section" style="display:none;">
-            <h2>Prediction Results:</h2>
-            <div id="efficientnetResult" class="result-box"></div>
-            <div id="mobilenetResult" class="result-box"></div>
+            <div id="loading" class="text-center my-3" style="display:none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Analyzing image...</p>
+            </div>
+
+            <div id="error" class="alert alert-danger mt-3" style="display:none;"></div>
+
+            <div id="results" class="results-section" style="display:none;">
+                <div class="result-card">
+                    <h3 id="result-model"></h3>
+                    <p><strong>Predicted Snake:</strong> <span id="result-class"></span></p>
+                    <p><strong>Confidence:</strong> <span id="result-confidence"></span></p>
+                    <p><strong>Venomous:</strong> <span id="result-venomous"></span></p>
+                    <p><strong>Risk Level:</strong> <span id="result-risk"></span></p>
+                    <p><strong>First Aid:</strong> <span id="result-first-aid"></span></p>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary mx-2" onclick="uploadImage()">Retest</button>
+                    <button class="btn btn-secondary mx-2" onclick="resetApp()">Choose New Image</button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     <script>
+        let lastFile = null;
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                lastFile = file;
+                const reader = new FileReader();
+                reader.onload = function(){
+                    const output = document.getElementById('imagePreview');
+                    output.src = reader.result;
+                    output.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function resetApp() {
+            document.getElementById('imageUpload').value = null;
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            lastFile = null;
+        }
+
         async function uploadImage() {
             const fileInput = document.getElementById('imageUpload');
-            const file = fileInput.files[0];
+            const file = fileInput.files[0] || lastFile;
+            const model = document.getElementById('modelSelect').value;
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const resultsDiv = document.getElementById('results');
+
+            if (!file) {
+                errorDiv.textContent = 'Please select an image file.';
+                errorDiv.style.display = 'block';
+                return;
+            }
 
             resultsDiv.style.display = 'none';
             errorDiv.style.display = 'none';
             loadingDiv.style.display = 'block';
 
-            if (!file) {
-                errorDiv.textContent = 'Please select an image file.';
-                errorDiv.style.display = 'block';
-                loadingDiv.style.display = 'none';
-                return;
-            }
-
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('model', model);
 
             try {
                 const response = await fetch('/predict', {
@@ -127,10 +219,9 @@
                 const data = await response.json();
 
                 loadingDiv.style.display = 'none';
-                resultsDiv.style.display = 'block';
 
                 if (response.ok) {
-                    displayResults(data);
+                    displayResults(data, model);
                 } else {
                     errorDiv.textContent = data.error || 'An error occurred during prediction.';
                     errorDiv.style.display = 'block';
@@ -143,36 +234,28 @@
             }
         }
 
-        function displayResults(data) {
-            const efficientnetResultDiv = document.getElementById('efficientnetResult');
-            const mobilenetResultDiv = document.getElementById('mobilenetResult');
+        function displayResults(data, model) {
+            const resultsDiv = document.getElementById('results');
+            const modelName = model === 'efficientnet' ? 'EfficientNet' : 'MobileNetV2';
+            const resultData = data[model];
 
-            efficientnetResultDiv.innerHTML = '';
-            mobilenetResultDiv.innerHTML = '';
-
-            if (data.efficientnet) {
-                if (data.efficientnet.error) {
-                    efficientnetResultDiv.innerHTML = `<h3>EfficientNet Result:</h3><p>Error: ${data.efficientnet.error}</p>`;
-                } else {
-                    efficientnetResultDiv.innerHTML = `
-                        <h3>EfficientNet Result:</h3>
-                        <p>Predicted Class: <strong>${data.efficientnet.class}</strong></p>
-                        <p>Confidence: <strong>${(data.efficientnet.confidence * 100).toFixed(2)}%</strong></p>
-                    `;
-                }
+            if (resultData.error) {
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = `Error with ${modelName}: ${resultData.error}`;
+                errorDiv.style.display = 'block';
+                return;
             }
 
-            if (data.mobilenet) {
-                if (data.mobilenet.error) {
-                    mobilenetResultDiv.innerHTML = `<h3>MobileNetV2 Result:</h3><p>Error: ${data.mobilenet.error}</p>`;
-                } else {
-                    mobilenetResultDiv.innerHTML = `
-                        <h3>MobileNetV2 Result:</h3>
-                        <p>Predicted Class: <strong>${data.mobilenet.class}</strong></p>
-                        <p>Confidence: <strong>${(data.mobilenet.confidence * 100).toFixed(2)}%</strong></p>
-                    `;
-                }
-            }
+            document.getElementById('result-model').textContent = `${modelName} Prediction`;
+            document.getElementById('result-class').textContent = resultData.class;
+            document.getElementById('result-confidence').textContent = `${(resultData.confidence * 100).toFixed(2)}%`;
+            document.getElementById('result-venomous').textContent = resultData.venomous;
+            const riskSpan = document.getElementById('result-risk');
+            riskSpan.textContent = resultData.risk_level;
+            riskSpan.className = `risk-${resultData.risk_level.toLowerCase()}`;
+            document.getElementById('result-first-aid').textContent = resultData.first_aid;
+
+            resultsDiv.style.display = 'block';
         }
     </script>
 </body>

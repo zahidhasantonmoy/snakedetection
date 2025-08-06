@@ -1,5 +1,6 @@
-Flask
-tensorflow
+Flask==2.3.3
+tensorflow==2.14.0
+numpy==1.24.3
+Pillow==10.3.0
 keras
-numpy
 gunicorn
