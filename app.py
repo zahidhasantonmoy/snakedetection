@@ -14,8 +14,8 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 
 # Load the models
 try:
-    efficientnet_model = load_model('final_efficientnetb0_classifier.h5')
-    mobilenet_model = load_model('MobileNetV2_best_model.h5')
+    efficientnet_model = load_model('final_efficientnetb0_classifier.h5', compile=False)
+    mobilenet_model = load_model('MobileNetV2_best_model.h5', compile=False)
     print("Models loaded successfully!")
 except Exception as e:
     print(f"Error loading models: {e}")
